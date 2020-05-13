@@ -21,7 +21,6 @@
 #include <sourcemod>
 #include <cstrike>
 #include <sdktools>
-#include <sdkhooks>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -32,8 +31,8 @@ public Plugin myinfo =
 {
 	name = "[CSGO] MySQL Player information", 
 	author = "Entity", 
-	description = "Saves player SteamID, Name and IP.", 
-	version = "0.1"
+	description = "Saves player SteamID, Name and IP, Join Date and Lastseen Date", 
+	version = "1.0"
 };
 
 public void OnPluginStart()
@@ -92,8 +91,9 @@ public void CheckPlayer_Callback(Database db, DBResultSet result, char[] error, 
 	char[] escapedSteamId = new char[len];
 	DB.Escape(steamid, escapedSteamId, len);
 	
-	char query[512];
-	Format(query, sizeof(query), "INSERT INTO `firstjoin` (auth, name, ip) VALUES ('%s', '%s', '%s') ON DUPLICATE KEY UPDATE name = '%s';", escapedSteamId, escapedName, ip, escapedName);
+	char query[512], time[32];
+	FormatTime(time, sizeof(time), "%d-%m-%Y", GetTime());
+	Format(query, sizeof(query), "INSERT INTO `firstjoin` (name, auth, ip, joindate, lastseen) VALUES ('%s', '%s', '%s', '%s', '%s') ON DUPLICATE KEY UPDATE name = '%s';", escapedName, escapedSteamId, ip, time, time, escapedName);
 	DB.Query(Nothing_Callback, query, id);
 }
 
@@ -111,8 +111,9 @@ void updateName(int client)
 	char[] escapedSteamId = new char[len];
 	DB.Escape(steamid, escapedSteamId, len);
 
-	char query[128];
-	FormatEx(query, sizeof(query), "UPDATE `firstjoin` SET name = '%s' WHERE auth = '%s';", escapedName, escapedSteamId);
+	char query[128], time[32];
+	FormatTime(time, sizeof(time), "%d-%m-%Y", GetTime());
+	FormatEx(query, sizeof(query), "UPDATE `firstjoin` SET name = '%s', lastseen = '%s' WHERE auth = '%s';", escapedName, time, escapedSteamId);
 	DB.Query(Nothing_Callback, query, client);
 }
 
@@ -140,7 +141,7 @@ public void SQLConnection_Callback(Database db, char[] error, any data)
 		return;
 	}		
 	DB = db;
-	DB.Query(Nothing_Callback, "CREATE TABLE IF NOT EXISTS `firstjoin` (`auth` varchar(32) NOT NULL, `name` varchar(64) NOT NULL, `ip` varchar(32) NOT NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8;", DBPrio_High);
+	DB.Query(Nothing_Callback, "CREATE TABLE IF NOT EXISTS `firstjoin` (`id` INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,`name` varchar(64) NOT NULL,`auth` varchar(32) NOT NULL,`ip` varchar(32) NOT NULL,`joindate` varchar(32) NOT NULL,`lastseen` varchar(32) NOT NULL) ENGINE = MyISAM DEFAULT CHARSET = utf8;", DBPrio_High);
 }
 
 public void Nothing_Callback(Database db, DBResultSet result, char[] error, any data)
