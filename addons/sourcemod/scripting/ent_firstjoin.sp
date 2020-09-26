@@ -32,7 +32,7 @@ public Plugin myinfo =
 	name = "[CSGO] MySQL Player information", 
 	author = "Entity", 
 	description = "Saves player SteamID, Name and IP, Join Date and Lastseen Date", 
-	version = "1.0"
+	version = "1.1"
 };
 
 public void OnPluginStart()
@@ -49,14 +49,14 @@ public void OnConfigsExecuted()
 
 public void OnClientPostAdminCheck(int client)
 {
-	if (IsValidClient(client))
-	{
-		char steamid[32], query[1024];
-		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-		
-		FormatEx(query, sizeof(query), "SELECT name FROM firstjoin WHERE auth = '%s';", steamid);
-		DB.Query(CheckPlayer_Callback, query, GetClientSerial(client));
-	}
+    if (IsValidClient(client))
+    {
+        char steamid[32], query[1024];
+        GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+        
+        DB.Format(query, sizeof(query), "SELECT name FROM firstjoin WHERE auth = '%s';", steamid);
+        DB.Query(CheckPlayer_Callback, query, GetClientSerial(client));
+    }
 }
 
 public void CheckPlayer_Callback(Database db, DBResultSet result, char[] error, any data)
